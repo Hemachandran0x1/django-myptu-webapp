@@ -6,9 +6,12 @@ from .models import Exam, Exam_Detail, Gate_Syllabus, Pyqs
 
 def exam(request, slug):
     exam = get_object_or_404(Exam, slug=slug)
+    print(exam)
     fields = Exam_Detail.objects.filter(exam = exam)
     if slug == 'gate' :
         syllabus = Gate_Syllabus.objects.all().values()
+    elif slug == 'cat':
+        return redirect("exams:exam_detail", exam_slug = slug, field_slug = slug)
     else:
         syllabus = None
     context = {'fields': fields, 'exam': exam, 'gate_syllabus': syllabus}
@@ -29,8 +32,10 @@ def exam_detail(request, exam_slug, field_slug):
         exam_match = Exam.objects.get(slug = exam_slug)
         fields = [k.slug for k in Exam_Detail.objects.filter(exam = exam_match)]
         if field_slug in fields:
-            field_match = Exam_Detail.objects.filter(slug = field_slug).values_list('id', 'field')
+            field_match = Exam_Detail.objects.filter(slug = field_slug).values_list('id','field')
             field = get_object_or_404(Exam_Detail, slug=field_slug)
+            field_content = field.exam_content
+            #print(field.exam_content)
             pyq = list(Pyqs.objects.filter(exam_field = field).values('year', 'year_slug'))
             for k in pyq:
                 c = k
@@ -40,8 +45,10 @@ def exam_detail(request, exam_slug, field_slug):
             #print(pyq, len(pyq)) 
             context = {
                 'field_match': field_match,
+                'field_content': field_content, 
                 'field': field,
-                'pyqs': pyq
+                'pyqs': pyq,
+                'path': 'templates/exams/upsc/ifs.html',
             }
             return render (request, 'exams/exam_detail.html', context)
         else:
@@ -73,3 +80,4 @@ def pyqs(request, exam_slug, field_slug, year_slug):
         'year': year_slug
         }
     return render (request, 'exams/pyqs.html', context)
+    
